@@ -1,8 +1,465 @@
 <!DOCTYPE html>
-<html>
-<head><title>Poker Dashboard</title></head>
-<body style="background:#0c0e13;color:#e2b84a;font-family:sans-serif;text-align:center;padding:60px;">
-<h1>Poker Dashboard</h1>
-<p>Hier kommt bald mein Dashboard hin.</p>
+
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c0e13;
+    --surface: #14171e;
+    --surface2: #1a1e28;
+    --border: #262b38;
+    --accent: #e2b84a;
+    --accent-dim: rgba(226,184,74,0.12);
+    --red: #d94f5c;
+    --green: #4ecb71;
+    --blue: #5b9cf5;
+    --purple: #a878f0;
+    --orange: #e8874a;
+    --text: #e8e4dc;
+    --text-dim: #8a8a95;
+    --radius: 12px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--bg); color: var(--text); font-family: 'Source Sans 3', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+/* GLOSSARY BAR */
+.glossary-bar { background: linear-gradient(135deg, #1a1510 0%, #1e1a12 50%, #1a1510 100%); border-bottom: 1px solid var(–accent); position: sticky; top: 0; z-index: 100; box-shadow: 0 4px 30px rgba(226,184,74,0.08); }
+.glossary-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.1rem; letter-spacing: 3px; color: var(–accent); text-align: center; padding: 10px 16px 4px; text-transform: uppercase; }
+.glossary-items { display: flex; justify-content: center; flex-wrap: wrap; padding: 4px 8px 10px; }
+.glossary-item { display: flex; align-items: center; gap: 6px; padding: 5px 14px; border-right: 1px solid rgba(226,184,74,0.15); cursor: default; transition: background 0.2s; position: relative; }
+.glossary-item:last-child { border-right: none; }
+.glossary-item:hover { background: rgba(226,184,74,0.06); }
+.glossary-en { font-family: ‘Bebas Neue’, sans-serif; font-size: 1rem; letter-spacing: 1.5px; color: var(–accent); }
+.glossary-de { font-size: 0.78rem; color: var(–text-dim); font-weight: 300; }
+.glossary-sep { color: rgba(226,184,74,0.3); font-size: 0.7rem; }
+.glossary-item .tooltip { display: none; position: absolute; top: calc(100% + 8px); left: 50%; transform: translateX(-50%); background: #1e2230; border: 1px solid var(–accent); border-radius: 8px; padding: 10px 14px; width: 240px; font-size: 0.8rem; color: var(–text); line-height: 1.5; box-shadow: 0 8px 30px rgba(0,0,0,0.5); z-index: 200; }
+.glossary-item .tooltip::before { content: ‘’; position: absolute; top: -6px; left: 50%; transform: translateX(-50%) rotate(45deg); width: 10px; height: 10px; background: #1e2230; border-left: 1px solid var(–accent); border-top: 1px solid var(–accent); }
+.glossary-item:hover .tooltip { display: block; }
+
+/* MAIN */
+.main-container { max-width: 960px; margin: 0 auto; padding: 28px 16px 60px; }
+.page-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 2.4rem; letter-spacing: 4px; text-align: center; margin-bottom: 6px; }
+.page-title span { color: var(–accent); }
+.page-sub { text-align: center; color: var(–text-dim); font-size: 0.85rem; margin-bottom: 32px; font-weight: 300; }
+
+/* TABS */
+.tab-row { display: flex; gap: 3px; margin-bottom: 24px; background: var(–surface); border-radius: var(–radius); padding: 4px; border: 1px solid var(–border); overflow-x: auto; }
+.tab-btn { flex: 1; padding: 11px 6px; background: transparent; border: none; color: var(–text-dim); font-family: ‘Bebas Neue’, sans-serif; font-size: 0.88rem; letter-spacing: 1.2px; cursor: pointer; border-radius: 8px; transition: all 0.25s; white-space: nowrap; min-width: 0; }
+.tab-btn.active { background: var(–accent-dim); color: var(–accent); box-shadow: inset 0 0 0 1px rgba(226,184,74,0.25); }
+.tab-btn:hover:not(.active) { color: var(–text); background: rgba(255,255,255,0.03); }
+.tab-content { display: none; animation: fadeUp 0.35s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+/* OPPONENT CARDS */
+.opp-grid { display: grid; gap: 12px; }
+.opp-card { background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); overflow: hidden; cursor: pointer; transition: all 0.25s; }
+.opp-card:hover { border-color: rgba(226,184,74,0.3); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.opp-card.expanded { border-color: var(–accent); box-shadow: 0 0 20px rgba(226,184,74,0.08); }
+.opp-header { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+.opp-icon { width: 44px; height: 44px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; flex-shrink: 0; }
+.opp-name { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.15rem; letter-spacing: 1.5px; }
+.opp-subtitle { font-size: 0.78rem; color: var(–text-dim); font-weight: 300; margin-top: 2px; }
+.opp-expand-icon { margin-left: auto; color: var(–text-dim); transition: transform 0.25s; font-size: 0.9rem; }
+.opp-card.expanded .opp-expand-icon { transform: rotate(180deg); }
+.opp-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.35s ease; padding: 0 18px; }
+.opp-card.expanded .opp-body { max-height: 300px; padding: 0 18px 18px; }
+.opp-strat { background: var(–surface2); border-radius: 8px; padding: 14px 16px; border-left: 3px solid var(–accent); }
+.opp-strat-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(–accent); margin-bottom: 6px; font-weight: 600; }
+.opp-strat-text { font-size: 0.88rem; line-height: 1.6; font-weight: 300; }
+
+/* BLIND STRATEGY */
+.blind-stack { display: flex; flex-direction: column; gap: 4px; }
+.blind-row { display: flex; align-items: stretch; background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); overflow: hidden; cursor: pointer; transition: all 0.25s; }
+.blind-row:hover { border-color: rgba(226,184,74,0.25); transform: translateX(4px); }
+.blind-row.active { border-color: var(–accent); box-shadow: 0 0 16px rgba(226,184,74,0.08); }
+.blind-indicator { width: 6px; flex-shrink: 0; }
+.blind-bb { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.05rem; letter-spacing: 1px; padding: 14px 16px; min-width: 110px; display: flex; align-items: center; gap: 8px; border-right: 1px solid var(–border); }
+.blind-bb-num { font-size: 1.3rem; color: var(–accent); }
+.blind-bb-label { font-size: 0.7rem; color: var(–text-dim); letter-spacing: 0; font-family: ‘Source Sans 3’, sans-serif; font-weight: 300; }
+.blind-text { padding: 14px 18px; font-size: 0.88rem; line-height: 1.5; font-weight: 300; flex: 1; }
+
+/* ALARM */
+.alarm-section { margin-top: 24px; background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); padding: 20px; }
+.alarm-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.1rem; letter-spacing: 2px; color: var(–red); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+.alarm-levels { display: flex; gap: 10px; }
+.alarm-card { flex: 1; text-align: center; padding: 16px 12px; border-radius: 10px; border: 1px solid var(–border); transition: all 0.3s; }
+.alarm-card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.alarm-bb { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.6rem; }
+.alarm-label { font-size: 0.75rem; margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 1.5px; }
+.alarm-sub { font-size: 0.72rem; color: var(–text-dim); margin-top: 2px; font-weight: 300; }
+.alarm-yellow { background: rgba(226,184,74,0.08); border-color: rgba(226,184,74,0.25); }
+.alarm-yellow .alarm-bb, .alarm-yellow .alarm-label { color: var(–accent); }
+.alarm-orange { background: rgba(232,135,74,0.08); border-color: rgba(232,135,74,0.25); }
+.alarm-orange .alarm-bb, .alarm-orange .alarm-label { color: var(–orange); }
+.alarm-red { background: rgba(217,79,92,0.08); border-color: rgba(217,79,92,0.25); }
+.alarm-red .alarm-bb, .alarm-red .alarm-label { color: var(–red); }
+
+.golden-rule { margin-top: 16px; background: var(–accent-dim); border: 1px solid rgba(226,184,74,0.25); border-radius: var(–radius); padding: 16px 20px; display: flex; align-items: center; gap: 12px; font-size: 0.88rem; line-height: 1.5; }
+.golden-rule-icon { font-size: 1.4rem; flex-shrink: 0; }
+
+/* BB CALCULATOR */
+.calc-section { margin-bottom: 24px; background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); padding: 20px; }
+.calc-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 1rem; letter-spacing: 2px; color: var(–text-dim); margin-bottom: 14px; }
+.calc-row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+.calc-field { flex: 1; min-width: 120px; }
+.calc-label { font-size: 0.72rem; color: var(–text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-weight: 600; }
+.calc-input { width: 100%; padding: 10px 14px; background: var(–surface2); border: 1px solid var(–border); border-radius: 8px; color: var(–text); font-family: ‘Bebas Neue’, sans-serif; font-size: 1.2rem; letter-spacing: 1px; outline: none; transition: border-color 0.2s; }
+.calc-input:focus { border-color: var(–accent); }
+.calc-result { padding: 10px 18px; background: var(–accent-dim); border: 1px solid rgba(226,184,74,0.2); border-radius: 8px; font-family: ‘Bebas Neue’, sans-serif; font-size: 1.4rem; color: var(–accent); letter-spacing: 1px; text-align: center; min-width: 100px; }
+.calc-zone { margin-top: 10px; font-size: 0.8rem; font-weight: 600; text-align: center; padding: 6px 12px; border-radius: 6px; }
+
+/* PHASE TIMELINE */
+.phase-timeline { position: relative; padding-left: 32px; }
+.phase-timeline::before { content: ‘’; position: absolute; left: 14px; top: 0; bottom: 0; width: 2px; background: linear-gradient(to bottom, var(–green), var(–blue), var(–orange), var(–red), #ff5a5a); border-radius: 2px; }
+.phase-card { position: relative; background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); margin-bottom: 12px; cursor: pointer; transition: all 0.25s; overflow: hidden; }
+.phase-card:hover { border-color: rgba(226,184,74,0.3); box-shadow: 0 6px 20px rgba(0,0,0,0.3); }
+.phase-card.expanded { border-color: var(–accent); box-shadow: 0 0 20px rgba(226,184,74,0.08); }
+.phase-dot { position: absolute; left: -26px; top: 20px; width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(–bg); z-index: 2; }
+.phase-header { display: flex; align-items: center; gap: 12px; padding: 16px 18px; }
+.phase-num { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.6rem; opacity: 0.3; min-width: 28px; }
+.phase-info { flex: 1; }
+.phase-name { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.1rem; letter-spacing: 1.5px; }
+.phase-levels { font-size: 0.72rem; color: var(–text-dim); font-weight: 300; margin-top: 2px; }
+.phase-aggro-wrap { display: flex; align-items: center; gap: 8px; padding-right: 8px; }
+.phase-aggro-label { font-size: 0.65rem; color: var(–text-dim); text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+.phase-aggro-bar { width: 60px; height: 6px; background: var(–surface2); border-radius: 3px; overflow: hidden; }
+.phase-aggro-fill { height: 100%; border-radius: 3px; }
+.phase-expand-icon { color: var(–text-dim); transition: transform 0.25s; font-size: 0.9rem; }
+.phase-card.expanded .phase-expand-icon { transform: rotate(180deg); }
+.phase-body { max-height: 0; overflow: hidden; transition: max-height 0.4s ease, padding 0.4s ease; padding: 0 18px; }
+.phase-card.expanded .phase-body { max-height: 600px; padding: 0 18px 18px; }
+.phase-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.phase-detail { background: var(–surface2); border-radius: 8px; padding: 12px 14px; }
+.phase-detail-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(–text-dim); margin-bottom: 5px; font-weight: 600; }
+.phase-detail-value { font-size: 0.84rem; line-height: 1.5; font-weight: 300; }
+.phase-detail.highlight { border-left: 3px solid var(–accent); }
+
+.global-rules { margin-top: 24px; background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); padding: 20px; }
+.global-rules-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 1rem; letter-spacing: 2px; color: var(–accent); margin-bottom: 14px; }
+.global-rules-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.global-rule-item { background: var(–surface2); border-radius: 8px; padding: 12px 14px; font-size: 0.84rem; line-height: 1.5; font-weight: 300; display: flex; align-items: center; gap: 10px; }
+.global-rule-icon { font-size: 1.1rem; flex-shrink: 0; }
+
+/* NUTRITION */
+.nutrition-phase { background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); margin-bottom: 12px; overflow: hidden; cursor: pointer; transition: all 0.25s; }
+.nutrition-phase:hover { border-color: rgba(226,184,74,0.3); }
+.nutrition-phase.expanded { border-color: var(–accent); box-shadow: 0 0 16px rgba(226,184,74,0.08); }
+.nutrition-header { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
+.nutrition-time { font-family: ‘Bebas Neue’, sans-serif; font-size: 0.8rem; letter-spacing: 1px; color: var(–accent); background: var(–accent-dim); padding: 4px 10px; border-radius: 6px; white-space: nowrap; }
+.nutrition-name { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.05rem; letter-spacing: 1.5px; flex: 1; }
+.nutrition-focus { font-size: 0.75rem; color: var(–text-dim); font-weight: 300; }
+.nutrition-body { max-height: 0; overflow: hidden; transition: max-height 0.35s ease, padding 0.35s ease; padding: 0 18px; }
+.nutrition-phase.expanded .nutrition-body { max-height: 400px; padding: 0 18px 18px; }
+.nutrition-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.nutrition-card { background: var(–surface2); border-radius: 8px; padding: 12px 14px; }
+.nutrition-card-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(–text-dim); margin-bottom: 5px; font-weight: 600; }
+.nutrition-card-value { font-size: 0.84rem; line-height: 1.6; font-weight: 300; }
+.nutrition-card.tip { border-left: 3px solid var(–accent); grid-column: 1 / -1; }
+
+.nutrition-principle { background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); padding: 20px; margin-bottom: 20px; }
+.nutrition-principle-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 1rem; letter-spacing: 2px; color: var(–accent); margin-bottom: 14px; }
+.principle-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.principle-item { border-radius: 8px; padding: 12px 14px; font-size: 0.84rem; line-height: 1.5; font-weight: 300; }
+.principle-avoid { background: rgba(217,79,92,0.08); border: 1px solid rgba(217,79,92,0.15); }
+.principle-good { background: rgba(78,203,113,0.08); border: 1px solid rgba(78,203,113,0.15); }
+.principle-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; margin-bottom: 4px; }
+.principle-label.avoid-label { color: var(–red); }
+.principle-label.good-label { color: var(–green); }
+
+.nutrition-quote { margin-top: 16px; background: var(–accent-dim); border: 1px solid rgba(226,184,74,0.25); border-radius: var(–radius); padding: 16px 20px; text-align: center; font-style: italic; font-size: 0.88rem; color: var(–accent); }
+
+/* LOGBOOK */
+.logbook-date { font-family: ‘Bebas Neue’, sans-serif; font-size: 1.4rem; letter-spacing: 2px; color: var(–accent); margin-bottom: 4px; }
+.logbook-subtitle { font-size: 0.85rem; color: var(–text-dim); font-weight: 300; margin-bottom: 24px; }
+.logbook-section { background: var(–surface); border: 1px solid var(–border); border-radius: var(–radius); padding: 20px; margin-bottom: 16px; }
+.logbook-section-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 1rem; letter-spacing: 2px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+.logbook-section-title.wins { color: var(–green); }
+.logbook-section-title.lessons { color: var(–orange); }
+.logbook-items { display: grid; gap: 8px; }
+.logbook-item { background: var(–surface2); border-radius: 8px; padding: 12px 16px; font-size: 0.86rem; line-height: 1.5; font-weight: 300; display: flex; align-items: flex-start; gap: 10px; }
+.logbook-icon { flex-shrink: 0; font-size: 0.9rem; margin-top: 2px; }
+.logbook-highlight { background: var(–accent-dim); border: 1px solid rgba(226,184,74,0.2); border-radius: var(–radius); padding: 16px 20px; margin-top: 16px; }
+.logbook-highlight-title { font-family: ‘Bebas Neue’, sans-serif; font-size: 0.9rem; letter-spacing: 2px; color: var(–accent); margin-bottom: 10px; }
+.logbook-highlight-text { font-size: 0.84rem; font-weight: 300; line-height: 1.6; color: var(–text); }
+
+/* COLORS */
+.type-calling { color: var(–blue); } .type-tight { color: var(–green); } .type-maniac { color: var(–red); } .type-tag { color: var(–purple); } .type-fish { color: var(–orange); }
+.bg-calling { background: rgba(91,156,245,0.12); } .bg-tight { background: rgba(78,203,113,0.12); } .bg-maniac { background: rgba(217,79,92,0.12); } .bg-tag { background: rgba(168,120,240,0.12); } .bg-fish { background: rgba(232,135,74,0.12); }
+.zone-safe { color: var(–green); } .zone-active { color: var(–blue); } .zone-aggro { color: var(–orange); } .zone-push { color: var(–red); } .zone-shove { color: #ff5a5a; }
+.ind-safe { background: var(–green); } .ind-active { background: var(–blue); } .ind-aggro { background: var(–orange); } .ind-push { background: var(–red); } .ind-shove { background: #ff5a5a; }
+.clr-p1 { color: var(–green); } .clr-p2 { color: var(–blue); } .clr-p3 { color: var(–orange); } .clr-p4 { color: var(–red); } .clr-p5 { color: #ff5a5a; }
+
+@media (max-width: 600px) {
+.glossary-item { padding: 4px 8px; }
+.alarm-levels { flex-direction: column; }
+.page-title { font-size: 1.8rem; }
+.blind-bb { min-width: 80px; }
+.calc-row { flex-direction: column; }
+.phase-detail-grid, .global-rules-grid, .nutrition-grid, .principle-grid { grid-template-columns: 1fr; }
+.tab-btn { font-size: 0.78rem; letter-spacing: 0.8px; padding: 11px 4px; }
+}
+</style>
+
+</head>
+<body>
+
+<!-- GLOSSARY BAR -->
+
+<div class="glossary-bar">
+  <div class="glossary-title">Poker Begriffe – Kurzreferenz</div>
+  <div class="glossary-items">
+    <div class="glossary-item"><span class="glossary-en">CHECK</span><span class="glossary-sep">→</span><span class="glossary-de">Schieben</span><div class="tooltip">Kein Einsatz – du gibst weiter, ohne Chips zu setzen. Nur möglich, wenn vorher niemand gesetzt hat.</div></div>
+    <div class="glossary-item"><span class="glossary-en">CALL</span><span class="glossary-sep">→</span><span class="glossary-de">Mitgehen</span><div class="tooltip">Du bezahlst den gleichen Betrag, den ein anderer gesetzt hat, um in der Hand zu bleiben.</div></div>
+    <div class="glossary-item"><span class="glossary-en">RAISE</span><span class="glossary-sep">→</span><span class="glossary-de">Erhöhen</span><div class="tooltip">Du setzt mehr als der vorherige Spieler. Alle müssen dann mitgehen, erhöhen oder aussteigen.</div></div>
+    <div class="glossary-item"><span class="glossary-en">FOLD</span><span class="glossary-sep">→</span><span class="glossary-de">Aussteigen</span><div class="tooltip">Du gibst deine Karten ab und bist raus. Du verlierst alle bisherigen Einsätze im Pot.</div></div>
+    <div class="glossary-item"><span class="glossary-en">BET</span><span class="glossary-sep">→</span><span class="glossary-de">Setzen</span><div class="tooltip">Den ersten Einsatz in einer Runde machen. Andere müssen dann callen, raisen oder folden.</div></div>
+    <div class="glossary-item"><span class="glossary-en">ALL-IN</span><span class="glossary-sep">→</span><span class="glossary-de">Alles setzen</span><div class="tooltip">Alle verbleibenden Chips setzen. Du bist bis zum Showdown dabei, kannst aber nicht mehr agieren.</div></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+
+<div class="main-container">
+  <h1 class="page-title">Poker <span>Dashboard</span></h1>
+  <p class="page-sub">Gegner lesen · Stack managen · Turnier dominieren · Körper & Kopf stärken</p>
+
+  <div class="tab-row">
+    <button class="tab-btn active" data-tab="opponents">♠ Gegner</button>
+    <button class="tab-btn" data-tab="blinds">♦ Blinds</button>
+    <button class="tab-btn" data-tab="phases">♣ Turnier</button>
+    <button class="tab-btn" data-tab="nutrition">🍌 Essen</button>
+    <button class="tab-btn" data-tab="logbook">📓 Logbuch</button>
+  </div>
+
+  <!-- TAB: OPPONENTS -->
+
+  <div id="tab-opponents" class="tab-content active">
+    <div class="opp-grid">
+      <div class="opp-card" onclick="toggleCard(this)"><div class="opp-header"><div class="opp-icon bg-calling"><span>📞</span></div><div><div class="opp-name type-calling">Calling Station</div><div class="opp-subtitle">Spielt viele Hände, foldet selten</div></div><div class="opp-expand-icon">▼</div></div><div class="opp-body"><div class="opp-strat"><div class="opp-strat-title">Deine Strategie</div><div class="opp-strat-text">Value betten mit starken Händen – er zahlt dich aus. <strong>Nicht bluffen!</strong> Er foldet fast nie.</div></div></div></div>
+      <div class="opp-card" onclick="toggleCard(this)"><div class="opp-header"><div class="opp-icon bg-tight"><span>🪨</span></div><div><div class="opp-name type-tight">Tight Spieler (Rock)</div><div class="opp-subtitle">Spielt wenige Hände, wartet auf Premium</div></div><div class="opp-expand-icon">▼</div></div><div class="opp-body"><div class="opp-strat"><div class="opp-strat-title">Deine Strategie</div><div class="opp-strat-text">Blinds stehlen! Er gibt kleine Pötte auf. Wenn er raised – <strong>Vorsicht, er hat was.</strong></div></div></div></div>
+      <div class="opp-card" onclick="toggleCard(this)"><div class="opp-header"><div class="opp-icon bg-maniac"><span>🔥</span></div><div><div class="opp-name type-maniac">Maniac (Aggressiv)</div><div class="opp-subtitle">Setzt oft und viel, ständig Druck</div></div><div class="opp-expand-icon">▼</div></div><div class="opp-body"><div class="opp-strat"><div class="opp-strat-title">Deine Strategie</div><div class="opp-strat-text">Geduldig bleiben! Starke Hände spielen und ihn trappen. <strong>Nicht aus dem Konzept bringen lassen.</strong></div></div></div></div>
+      <div class="opp-card" onclick="toggleCard(this)"><div class="opp-header"><div class="opp-icon bg-tag"><span>🎯</span></div><div><div class="opp-name type-tag">TAG (Tight Aggressive)</div><div class="opp-subtitle">Solider Spieler, selektiv aber aggressiv</div></div><div class="opp-expand-icon">▼</div></div><div class="opp-body"><div class="opp-strat"><div class="opp-strat-title">Deine Strategie</div><div class="opp-strat-text">Normal spielen, Respekt zeigen. <strong>Vermeide grosse Pötte ohne starke Hand.</strong> Position nutzen.</div></div></div></div>
+      <div class="opp-card" onclick="toggleCard(this)"><div class="opp-header"><div class="opp-icon bg-fish"><span>🐟</span></div><div><div class="opp-name type-fish">Freizeitspieler / Unsicher</div><div class="opp-subtitle">Unlogische Moves, schwer zu lesen</div></div><div class="opp-expand-icon">▼</div></div><div class="opp-body"><div class="opp-strat"><div class="opp-strat-title">Deine Strategie</div><div class="opp-strat-text">Einfaches Poker. <strong>Keine Fancy Plays.</strong> Value betten, nicht versuchen ihn auszulesen.</div></div></div></div>
+    </div>
+  </div>
+
+  <!-- TAB: BLINDS -->
+
+  <div id="tab-blinds" class="tab-content">
+    <div class="calc-section">
+      <div class="calc-title">📊 Big Blind Rechner</div>
+      <div class="calc-row">
+        <div class="calc-field"><div class="calc-label">Dein Stack</div><input class="calc-input" type="number" id="calcStack" value="5000" oninput="calcBB()"></div>
+        <div class="calc-field"><div class="calc-label">Big Blind</div><input class="calc-input" type="number" id="calcBBInput" value="200" oninput="calcBB()"></div>
+        <div><div class="calc-result" id="calcResult">25 BB</div><div class="calc-zone" id="calcZone"></div></div>
+      </div>
+    </div>
+    <div class="blind-stack">
+      <div class="blind-row" onclick="toggleBlind(this)"><div class="blind-indicator ind-safe"></div><div class="blind-bb"><span class="blind-bb-num zone-safe">40+</span><span class="blind-bb-label">BB</span></div><div class="blind-text">Ruhig spielen, Spots wählen, Position nutzen.</div></div>
+      <div class="blind-row" onclick="toggleBlind(this)"><div class="blind-indicator ind-active"></div><div class="blind-bb"><span class="blind-bb-num zone-active">20–40</span><span class="blind-bb-label">BB</span></div><div class="blind-text">Aktiver werden. Steals versuchen, Position wird wichtiger.</div></div>
+      <div class="blind-row" onclick="toggleBlind(this)"><div class="blind-indicator ind-aggro"></div><div class="blind-bb"><span class="blind-bb-num zone-aggro">15–20</span><span class="blind-bb-label">BB</span></div><div class="blind-text">Aggressiver spielen, Druck machen. Die Blinds fressen dich.</div></div>
+      <div class="blind-row" onclick="toggleBlind(this)"><div class="blind-indicator ind-push"></div><div class="blind-bb"><span class="blind-bb-num zone-push">10–15</span><span class="blind-bb-label">BB</span></div><div class="blind-text">Push oder Fold. Keine halben Sachen – all-in oder weg.</div></div>
+      <div class="blind-row" onclick="toggleBlind(this)"><div class="blind-indicator ind-shove"></div><div class="blind-bb"><span class="blind-bb-num zone-shove">&lt;10</span><span class="blind-bb-label">BB</span></div><div class="blind-text">Jede brauchbare Hand ist ein Shove. Nicht warten!</div></div>
+    </div>
+    <div class="alarm-section">
+      <div class="alarm-title">🚨 Alarm-System</div>
+      <div class="alarm-levels">
+        <div class="alarm-card alarm-yellow"><div class="alarm-bb">20 BB</div><div class="alarm-label">Aufmerksam</div><div class="alarm-sub">Spots suchen</div></div>
+        <div class="alarm-card alarm-orange"><div class="alarm-bb">15 BB</div><div class="alarm-label">Aggressiv</div><div class="alarm-sub">Druck machen</div></div>
+        <div class="alarm-card alarm-red"><div class="alarm-bb">10 BB</div><div class="alarm-label">Handeln!</div><div class="alarm-sub">Jetzt oder nie</div></div>
+      </div>
+    </div>
+    <div class="golden-rule"><div class="golden-rule-icon">⚡</div><div><strong>Wichtige Regel:</strong> Ich warte nicht auf perfekte Karten, wenn mein Stack klein wird.</div></div>
+  </div>
+
+  <!-- TAB: TURNIER PHASEN -->
+
+  <div id="tab-phases" class="tab-content">
+    <div class="phase-timeline">
+      <div class="phase-card" onclick="togglePhase(this)"><div class="phase-dot" style="background:var(--green);"></div><div class="phase-header"><div class="phase-num clr-p1">1</div><div class="phase-info"><div class="phase-name clr-p1">Chipaufbau</div><div class="phase-levels">Level 1–4 · Blinds 100–800</div></div><div class="phase-aggro-wrap"><div><div class="phase-aggro-label">Aggro</div><div class="phase-aggro-bar"><div class="phase-aggro-fill" style="width:30%;background:var(--green);"></div></div></div></div><div class="phase-expand-icon">▼</div></div><div class="phase-body"><div class="phase-detail-grid"><div class="phase-detail"><div class="phase-detail-label">Ziel</div><div class="phase-detail-value">Chips aufbauen ohne Risiko</div></div><div class="phase-detail"><div class="phase-detail-label">Spielstil</div><div class="phase-detail-value">TAG · 30%</div></div><div class="phase-detail highlight"><div class="phase-detail-label">Hände</div><div class="phase-detail-value">JJ+, AQ+, AK, suited connectors in Position</div></div><div class="phase-detail"><div class="phase-detail-label">Vermeiden</div><div class="phase-detail-value">Keine Bluffs, keine marginalen Calls OOP</div></div></div></div></div>
+
+```
+  <div class="phase-card" onclick="togglePhase(this)"><div class="phase-dot" style="background:var(--blue);"></div><div class="phase-header"><div class="phase-num clr-p2">2</div><div class="phase-info"><div class="phase-name clr-p2">Steals & Position</div><div class="phase-levels">Level 5–8 · Blinds 500–3000</div></div><div class="phase-aggro-wrap"><div><div class="phase-aggro-label">Aggro</div><div class="phase-aggro-bar"><div class="phase-aggro-fill" style="width:60%;background:var(--blue);"></div></div></div></div><div class="phase-expand-icon">▼</div></div><div class="phase-body"><div class="phase-detail-grid"><div class="phase-detail"><div class="phase-detail-label">Ziel</div><div class="phase-detail-value">Steals + Position nutzen</div></div><div class="phase-detail"><div class="phase-detail-label">Spielstil</div><div class="phase-detail-value">Aggressiver · 60%</div></div><div class="phase-detail highlight"><div class="phase-detail-label">Hände</div><div class="phase-detail-value">CO/BTN Steals, suited Broadways, 3-Bets light</div></div><div class="phase-detail"><div class="phase-detail-label">Strategie</div><div class="phase-detail-value">Blindsteals + Initiative behalten</div></div></div></div></div>
+
+  <div class="phase-card" onclick="togglePhase(this)"><div class="phase-dot" style="background:var(--orange);"></div><div class="phase-header"><div class="phase-num clr-p3">3</div><div class="phase-info"><div class="phase-name clr-p3">Stack sichern & Druck</div><div class="phase-levels">Level 9–12 · Blinds 2k–10k</div></div><div class="phase-aggro-wrap"><div><div class="phase-aggro-label">Aggro</div><div class="phase-aggro-bar"><div class="phase-aggro-fill" style="width:78%;background:var(--orange);"></div></div></div></div><div class="phase-expand-icon">▼</div></div><div class="phase-body"><div class="phase-detail-grid"><div class="phase-detail"><div class="phase-detail-label">Ziel</div><div class="phase-detail-value">Stack sichern + Druck</div></div><div class="phase-detail"><div class="phase-detail-label">Spielstil</div><div class="phase-detail-value">Selektiv aggressiv · 75–80%</div></div><div class="phase-detail highlight"><div class="phase-detail-label">Kernregel</div><div class="phase-detail-value">Folden > Callen. 3-Bet or Fold. Shortstacks attackieren.</div></div><div class="phase-detail"><div class="phase-detail-label">Merke</div><div class="phase-detail-value">Initiative ist alles.</div></div></div></div></div>
+
+  <div class="phase-card" onclick="togglePhase(this)"><div class="phase-dot" style="background:var(--red);"></div><div class="phase-header"><div class="phase-num clr-p4">4</div><div class="phase-info"><div class="phase-name clr-p4">ICM & Dominanz</div><div class="phase-levels">Level 13–17 · Blinds 7k–60k</div></div><div class="phase-aggro-wrap"><div><div class="phase-aggro-label">Aggro</div><div class="phase-aggro-bar"><div class="phase-aggro-fill" style="width:92%;background:var(--red);"></div></div></div></div><div class="phase-expand-icon">▼</div></div><div class="phase-body"><div class="phase-detail-grid"><div class="phase-detail"><div class="phase-detail-label">Ziel</div><div class="phase-detail-value">ICM nutzen + Dominanz</div></div><div class="phase-detail"><div class="phase-detail-label">Spielstil</div><div class="phase-detail-value">Sehr aggressiv · 90%+</div></div><div class="phase-detail highlight"><div class="phase-detail-label">Hände</div><div class="phase-detail-value">Any Ace in Position, steal heavy, Fold Equity nutzen</div></div><div class="phase-detail"><div class="phase-detail-label">Strategie</div><div class="phase-detail-value">Max Druck. Gegner zum Folden zwingen.</div></div></div></div></div>
+
+  <div class="phase-card" onclick="togglePhase(this)"><div class="phase-dot" style="background:#ff5a5a;"></div><div class="phase-header"><div class="phase-num clr-p5">5</div><div class="phase-info"><div class="phase-name clr-p5">Push / Fold</div><div class="phase-levels">Level 18–21 · Blinds 40k+</div></div><div class="phase-aggro-wrap"><div><div class="phase-aggro-label">Aggro</div><div class="phase-aggro-bar"><div class="phase-aggro-fill" style="width:100%;background:#ff5a5a;"></div></div></div></div><div class="phase-expand-icon">▼</div></div><div class="phase-body"><div class="phase-detail-grid"><div class="phase-detail"><div class="phase-detail-label">Ziel</div><div class="phase-detail-value">Push/Fold – mathematisch</div></div><div class="phase-detail"><div class="phase-detail-label">Spielstil</div><div class="phase-detail-value">All-in Strategie · maximal</div></div><div class="phase-detail highlight"><div class="phase-detail-label">Hände</div><div class="phase-detail-value">&lt;20BB = All-in oder Fold. Any Pair, viele Aces shovebar.</div></div><div class="phase-detail"><div class="phase-detail-label">Strategie</div><div class="phase-detail-value">Keine kleinen Calls. Shove Spots nutzen.</div></div></div></div></div>
+</div>
+<div class="global-rules">
+  <div class="global-rules-title">🏆 Goldene Turnier-Regeln</div>
+  <div class="global-rules-grid">
+    <div class="global-rule-item"><span class="global-rule-icon">👑</span><span>Position = Macht</span></div>
+    <div class="global-rule-item"><span class="global-rule-icon">💰</span><span>Chips früh = Freiheit später</span></div>
+    <div class="global-rule-item"><span class="global-rule-icon">🃏</span><span>Turniere gewinnt man durch Folds</span></div>
+    <div class="global-rule-item"><span class="global-rule-icon">💪</span><span>Keine Angst vor All-ins mit Equity</span></div>
+  </div>
+</div>
+```
+
+  </div>
+
+  <!-- TAB: ERNÄHRUNG -->
+
+  <div id="tab-nutrition" class="tab-content">
+
+```
+<div class="nutrition-principle">
+  <div class="nutrition-principle-title">🧠 Grundprinzip</div>
+  <div class="principle-grid">
+    <div class="principle-item principle-avoid">
+      <div class="principle-label avoid-label">✗ Vermeiden</div>
+      Zucker-Spikes (Energy Crash), schwere Mahlzeiten (Müdigkeit), Hunger (Tilt + schlechte Entscheidungen)
+    </div>
+    <div class="principle-item principle-good">
+      <div class="principle-label good-label">✓ Anstreben</div>
+      Stabile Energie, leichte konstante Snacks, Wasser + Elektrolyte
+    </div>
+  </div>
+</div>
+
+<div class="nutrition-phase" onclick="toggleNutrition(this)">
+  <div class="nutrition-header">
+    <div class="nutrition-time">0–2h</div>
+    <div><div class="nutrition-name clr-p1">Phase 1 – Ruhig starten</div><div class="nutrition-focus">Level 1–4</div></div>
+    <div class="opp-expand-icon">▼</div>
+  </div>
+  <div class="nutrition-body"><div class="nutrition-grid">
+    <div class="nutrition-card"><div class="nutrition-card-label">🍌 Essen</div><div class="nutrition-card-value">Banane (schnelle + stabile Energie), Datteln / Müsliriegel (low sugar), kleine Menge Nüsse</div></div>
+    <div class="nutrition-card"><div class="nutrition-card-label">💧 Trinken</div><div class="nutrition-card-value">Wasser konstant, kein Zucker-Drink nötig</div></div>
+    <div class="nutrition-card tip"><div class="nutrition-card-label">💡 Tipp</div><div class="nutrition-card-value">Du spielst noch entspannt – nicht überessen</div></div>
+  </div></div>
+</div>
+
+<div class="nutrition-phase" onclick="toggleNutrition(this)">
+  <div class="nutrition-header">
+    <div class="nutrition-time">2–4h</div>
+    <div><div class="nutrition-name clr-p2">Phase 2 – Energie stabilisieren</div><div class="nutrition-focus">Level 5–8</div></div>
+    <div class="opp-expand-icon">▼</div>
+  </div>
+  <div class="nutrition-body"><div class="nutrition-grid">
+    <div class="nutrition-card"><div class="nutrition-card-label">🍌 Essen</div><div class="nutrition-card-value">1 Snack alle 60–90 Min. Vollkorncracker / Darvida, Banane oder Apfel, kleine Hand Nüsse</div></div>
+    <div class="nutrition-card"><div class="nutrition-card-label">💧 Trinken</div><div class="nutrition-card-value">Wasser + evtl. Elektrolyt (sehr gut)</div></div>
+    <div class="nutrition-card tip"><div class="nutrition-card-label">💡 Tipp</div><div class="nutrition-card-value">Jetzt beginnt Konzentrationsarbeit – keinen Hunger entstehen lassen!</div></div>
+  </div></div>
+</div>
+
+<div class="nutrition-phase" onclick="toggleNutrition(this)">
+  <div class="nutrition-header">
+    <div class="nutrition-time">4–5h</div>
+    <div><div class="nutrition-name clr-p3">Phase 3 – Keine mentalen Drops</div><div class="nutrition-focus">Level 9–12</div></div>
+    <div class="opp-expand-icon">▼</div>
+  </div>
+  <div class="nutrition-body"><div class="nutrition-grid">
+    <div class="nutrition-card"><div class="nutrition-card-label">🍌 Essen</div><div class="nutrition-card-value">Banane oder halber Riegel. Nichts Fettiges! Kein Sandwich, kein Fast Food.</div></div>
+    <div class="nutrition-card"><div class="nutrition-card-label">💧 Trinken</div><div class="nutrition-card-value">Regelmässig kleine Schlucke. Kein Energy-Drink (Crash-Gefahr)</div></div>
+    <div class="nutrition-card tip"><div class="nutrition-card-label">⚠️ Achtung</div><div class="nutrition-card-value">Viele Spieler verlieren hier Turniere wegen Müdigkeit!</div></div>
+  </div></div>
+</div>
+
+<div class="nutrition-phase" onclick="toggleNutrition(this)">
+  <div class="nutrition-header">
+    <div class="nutrition-time">5h+</div>
+    <div><div class="nutrition-name clr-p4">Phase 4 – Finale · Max Focus</div><div class="nutrition-focus">Level 13+</div></div>
+    <div class="opp-expand-icon">▼</div>
+  </div>
+  <div class="nutrition-body"><div class="nutrition-grid">
+    <div class="nutrition-card"><div class="nutrition-card-label">🍌 Essen</div><div class="nutrition-card-value">Banane, Datteln, ggf. Traubenzucker (klein dosiert). Kein grosses Essen mehr!</div></div>
+    <div class="nutrition-card"><div class="nutrition-card-label">💧 Trinken</div><div class="nutrition-card-value">Regelmässig kleine Schlucke Wasser</div></div>
+    <div class="nutrition-card tip"><div class="nutrition-card-label">🧠 Merke</div><div class="nutrition-card-value">Verdauung = Konzentrationsverlust. Leicht im Kopf bleiben!</div></div>
+  </div></div>
+</div>
+
+<div class="nutrition-quote">„Essen ist nicht Energie tanken – sondern Energie stabilisieren."</div>
+```
+
+  </div>
+
+  <!-- TAB: LOGBUCH -->
+
+  <div id="tab-logbook" class="tab-content">
+
+```
+<div class="logbook-date">📅 12. April 2026</div>
+<div class="logbook-subtitle">1. Poker Turnier</div>
+
+<div class="logbook-section">
+  <div class="logbook-section-title wins">🏆 Meine grössten Erfolge</div>
+  <div class="logbook-items">
+    <div class="logbook-item"><span class="logbook-icon">⭐</span><span><strong>Final Table</strong> erreicht</span></div>
+    <div class="logbook-item"><span class="logbook-icon">💥</span><span>4 Personen im All-in rausgeworfen</span></div>
+    <div class="logbook-item"><span class="logbook-icon">🃏</span><span>Strasse perfekt gespielt – alle überrascht</span></div>
+    <div class="logbook-item"><span class="logbook-icon">📚</span><span>Aus Fehlern gelernt (KK)</span></div>
+    <div class="logbook-item"><span class="logbook-icon">🍌</span><span>Richtig gegessen und getrunken</span></div>
+    <div class="logbook-item"><span class="logbook-icon">👁️</span><span>Strasse mit J bei Markus erkannt</span></div>
+    <div class="logbook-item"><span class="logbook-icon">🔄</span><span>Jede Runde neu kalibriert</span></div>
+  </div>
+</div>
+
+<div class="logbook-section">
+  <div class="logbook-section-title lessons">📝 Learnings für nächstes Mal</div>
+  <div class="logbook-items">
+    <div class="logbook-item"><span class="logbook-icon">📊</span><span>Stack und Position besser unter Kontrolle halten</span></div>
+    <div class="logbook-item"><span class="logbook-icon">🔍</span><span>Gegner aktiver analysieren</span></div>
+    <div class="logbook-item"><span class="logbook-icon">💰</span><span>Betsize konsequenter wählen – <em>„Wäre ich bereit, das 3-fache zu bezahlen?"</em></span></div>
+    <div class="logbook-item"><span class="logbook-icon">♠️</span><span>KK nicht wegwerfen – Stärke erkennen</span></div>
+    <div class="logbook-item"><span class="logbook-icon">👩</span><span>Meine Rolle als Frau am Tisch bewusster nutzen</span></div>
+    <div class="logbook-item"><span class="logbook-icon">⏳</span><span>Nicht nur auf gute Hände warten – aktiver spielen</span></div>
+    <div class="logbook-item"><span class="logbook-icon">🛡️</span><span>Big Blind besser verteidigen</span></div>
+    <div class="logbook-item"><span class="logbook-icon">⚠️</span><span>QQ nicht overplayen – 8er-Drilling auf dem Board nicht ignorieren</span></div>
+    <div class="logbook-item"><span class="logbook-icon">🧣</span><span>Schal anziehen (Rötung am Hals verbergen)</span></div>
+  </div>
+</div>
+
+<div class="logbook-highlight">
+  <div class="logbook-highlight-title">🎯 Fokus fürs nächste Turnier</div>
+  <div class="logbook-highlight-text">
+    <strong>1.</strong> Gegner von Anfang an lesen und kategorisieren<br>
+    <strong>2.</strong> Stack-Awareness: BB immer im Kopf haben<br>
+    <strong>3.</strong> Betsize-Disziplin: „Würde ich das 3-fache bezahlen?"<br>
+    <strong>4.</strong> Nicht passiv werden – Initiative behalten<br>
+    <strong>5.</strong> Schal mitnehmen 🧣
+  </div>
+</div>
+```
+
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+      this.classList.add('active');
+    });
+  });
+  function toggleCard(card) { const w = card.classList.contains('expanded'); document.querySelectorAll('.opp-card').forEach(c => c.classList.remove('expanded')); if (!w) card.classList.add('expanded'); }
+  function toggleBlind(row) { const w = row.classList.contains('active'); document.querySelectorAll('.blind-row').forEach(r => r.classList.remove('active')); if (!w) row.classList.add('active'); }
+  function togglePhase(card) { const w = card.classList.contains('expanded'); document.querySelectorAll('.phase-card').forEach(c => c.classList.remove('expanded')); if (!w) card.classList.add('expanded'); }
+  function toggleNutrition(el) { const w = el.classList.contains('expanded'); document.querySelectorAll('.nutrition-phase').forEach(c => c.classList.remove('expanded')); if (!w) el.classList.add('expanded'); }
+  function calcBB() {
+    const stack = parseFloat(document.getElementById('calcStack').value) || 0;
+    const bb = parseFloat(document.getElementById('calcBBInput').value) || 1;
+    const r = Math.round(stack / bb * 10) / 10;
+    document.getElementById('calcResult').textContent = r + ' BB';
+    const z = document.getElementById('calcZone');
+    if (r >= 40) { z.textContent = '🟢 Komfortzone'; z.style.background = 'rgba(78,203,113,0.12)'; z.style.color = '#4ecb71'; }
+    else if (r >= 20) { z.textContent = '🔵 Aktiv werden'; z.style.background = 'rgba(91,156,245,0.12)'; z.style.color = '#5b9cf5'; }
+    else if (r >= 15) { z.textContent = '🟠 Aggressiv!'; z.style.background = 'rgba(232,135,74,0.12)'; z.style.color = '#e8874a'; }
+    else if (r >= 10) { z.textContent = '🔴 Push or Fold'; z.style.background = 'rgba(217,79,92,0.12)'; z.style.color = '#d94f5c'; }
+    else { z.textContent = '🚨 SHOVE NOW'; z.style.background = 'rgba(255,90,90,0.15)'; z.style.color = '#ff5a5a'; }
+  }
+  calcBB();
+</script>
+
 </body>
 </html>
